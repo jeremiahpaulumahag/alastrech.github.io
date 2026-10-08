@@ -1,0 +1,13 @@
+{
+  "name": "alastretch",
+  "version": "1.0.0",
+  "description": "Interactive 4-minute office stretching experience",
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/server.js",
+    "render": "node scripts/render-video.js"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  }
+}

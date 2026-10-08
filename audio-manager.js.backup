@@ -1,0 +1,221 @@
+// Audio Manager - handles background music, speech, and sound effects
+export class AudioManager {
+    constructor() {
+        this.audioContext = null;
+        this.musicGainNode = null;
+        this.sfxGainNode = null;
+        this.backgroundSource = null;
+        this.isInitialized = false;
+        this.isPaused = false;
+        this.isSpeaking = false;
+        
+        // Web Speech API
+        this.synth = window.speechSynthesis;
+        this.voices = [];
+        
+        if (this.synth) {
+            this.synth.onvoiceschanged = () => {
+                this.voices = this.synth.getVoices();
+            };
+        }
+    }
+    
+    initAudioContext() {
+        if (this.isInitialized) return;
+        
+        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        this.musicGainNode = this.audioContext.createGain();
+        this.sfxGainNode = this.audioContext.createGain();
+        
+        this.musicGainNode.connect(this.audioContext.destination);
+        this.sfxGainNode.connect(this.audioContext.destination);
+        
+        this.musicGainNode.gain.value = 0.3;
+        this.sfxGainNode.gain.value = 0.5;
+        
+        this.isInitialized = true;
+    }
+    
+    startBackgroundMusic() {
+        this.initAudioContext();
+        this.createBackgroundMusic();
+    }
+    
+    createBackgroundMusic() {
+        if (this.backgroundSource) {
+            this.backgroundSource.stop();
+        }
+        
+        // Create a simple upbeat background loop using oscillators
+        const osc1 = this.audioContext.createOscillator();
+        const osc2 = this.audioContext.createOscillator();
+        const gain1 = this.audioContext.createGain();
+        const gain2 = this.audioContext.createGain();
+        
+        osc1.type = 'sine';
+        osc2.type = 'triangle';
+        
+        // Simple chord progression pattern
+        const notes = [261.63, 329.63, 392.00, 329.63]; // C, E, G, E
+        let noteIndex = 0;
+        const tempo = 120; // BPM
+        const noteLength = 60 / tempo;
+        
+        const playNote = () => {
+            osc1.frequency.setValueAtTime(notes[noteIndex], this.audioContext.currentTime);
+            osc2.frequency.setValueAtTime(notes[noteIndex] * 1.5, this.audioContext.currentTime);
+            noteIndex = (noteIndex + 1) % notes.length;
+        };
+        
+        playNote();
+        setInterval(playNote, noteLength * 1000);
+        
+        gain1.gain.value = 0.05;
+        gain2.gain.value = 0.03;
+        
+        osc1.connect(gain1);
+        osc2.connect(gain2);
+        gain1.connect(this.musicGainNode);
+        gain2.connect(this.musicGainNode);
+        
+        osc1.start();
+        osc2.start();
+        
+        this.backgroundSource = osc1;
+    }
+    
+    speak(text) {
+        if (!this.synth) return;
+        
+        this.isSpeaking = true;
+        
+        // Duck music when speaking
+        if (this.musicGainNode) {
+            this.musicGainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+            this.musicGainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.2);
+        }
+        
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+        
+        // Find a good voice
+        const femaleVoice = this.voices.find(v => v.lang.startsWith('en') && v.name.includes('Female'));
+        if (femaleVoice) utterance.voice = femaleVoice;
+        
+        utterance.onend = () => {
+            this.isSpeaking = false;
+            // Restore music volume
+            if (this.musicGainNode && this.audioContext) {
+                this.musicGainNode.gain.setValueAtTime(0.1, this.audioContext.currentTime);
+                this.musicGainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.5);
+            }
+        };
+        
+        this.synth.speak(utterance);
+    }
+    
+    playCountdown() {
+        if (!this.audioContext) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, this.audioContext.currentTime);
+        
+        gain.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        
+        osc.connect(gain);
+        gain.connect(this.sfxGainNode);
+        
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.1);
+    }
+    
+    playTransition() {
+        if (!this.audioContext) return;
+        
+        const osc = this.audioContext.createOscillator();
+        const gain = this.audioContext.createGain();
+        
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, this.audioContext.currentTime);
+        osc.frequency.linearRampToValueAtTime(400, this.audioContext.currentTime + 0.2);
+        
+        gain.gain.setValueAtTime(0.2, this.audioContext.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        
+        osc.connect(gain);
+        gain.connect(this.sfxGainNode);
+        
+        osc.start();
+        osc.stop(this.audioContext.currentTime + 0.2);
+    }
+    
+    playComplete() {
+        this.speak("Amazing work! You've completed your stretch!");
+        
+        if (!this.audioContext) return;
+        
+        // Play celebration sound
+        const times = [0, 0.1, 0.2];
+        times.forEach(time => {
+            const osc = this.audioContext.createOscillator();
+            const gain = this.audioContext.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(800 + time * 200, this.audioContext.currentTime + time);
+            
+            gain.gain.setValueAtTime(0.2, this.audioContext.currentTime + time);
+            gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + time + 0.3);
+            
+            osc.connect(gain);
+            gain.connect(this.sfxGainNode);
+            
+            osc.start(this.audioContext.currentTime + time);
+            osc.stop(this.audioContext.currentTime + time + 0.3);
+        });
+    }
+    
+    pause() {
+        if (this.audioContext && this.audioContext.state === 'running') {
+            this.audioContext.suspend();
+        }
+        if (this.synth) {
+            this.synth.pause();
+        }
+        this.isPaused = true;
+    }
+    
+    resume() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+        if (this.synth) {
+            this.synth.resume();
+        }
+        this.isPaused = false;
+    }
+    
+    stop() {
+        if (this.backgroundSource) {
+            try {
+                this.backgroundSource.stop();
+            } catch (e) {}
+            this.backgroundSource = null;
+        }
+        if (this.audioContext) {
+            this.audioContext.close();
+            this.audioContext = null;
+        }
+        if (this.synth) {
+            this.synth.cancel();
+        }
+        this.isInitialized = false;
+        this.isPaused = false;
+    }
+}
+

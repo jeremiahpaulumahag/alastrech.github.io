@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>4-Minute Office Stretch with Ala & Friends</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app">
+        <div id="info">
+            <h2 id="exercise-title">Get Ready!</h2>
+            <div id="round-info">Round 1 of 8</div>
+            <div id="timer">30</div>
+            <div id="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+            <div id="voice-status"></div>
+        </div>
+        
+        <div id="workout-stage">
+            <canvas id="canvas" width="1920" height="1080"></canvas>
+            <div id="sprite-panel" aria-label="Workout character sprite panel">
+                <div class="sprite-slot sprite-slot-left">
+                    <div class="character-sprite character-sprite-left" role="img" aria-label="Blonde anime workout partner stretching"></div>
+                </div>
+                <div class="sprite-slot sprite-slot-center">
+                    <div class="character-sprite character-sprite-center" role="img" aria-label="Ala, white-haired main anime workout character stretching"></div>
+                </div>
+                <div class="sprite-slot sprite-slot-right">
+                    <div class="character-sprite character-sprite-right" role="img" aria-label="Headband anime workout partner stretching"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <button id="play-btn" class="primary">▶ Start Workout</button>
+            <button id="pause-btn" style="display:none;">⏸ Pause</button>
+            <button id="restart-btn">↻ Restart</button>
+            <button id="voice-btn" class="voice">🎤 Voice Control</button>
+        </div>
+
+        <div id="complete-message" class="complete-message">
+            <h1>🎉 Amazing Work!</h1>
+            <p>You've completed your 4-minute stretch!</p>
+            <button id="restart-complete-btn" class="primary">Do It Again</button>
+        </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>
